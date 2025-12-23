@@ -1,8 +1,10 @@
+from abc import ABC, abstractmethod
 from typing import Type
 
 
-class NotificationService:
-    def send(self) -> None:
+class NotificationService(ABC):
+    @abstractmethod
+    def send(self, message: str) -> None:
         raise NotImplementedError("Subclasses must implement the pay method")
 
 
@@ -29,20 +31,19 @@ class NotificationFactory:
     }
 
     @staticmethod
-    def get_notification(method: str = None) -> NotificationService:
+    def create(method: str = None) -> NotificationService:
         """
         Available services are 'email', 'sms', 'push'
         """
         method = str(method).lower().strip()
         if method not in NotificationFactory._methods:
-            raise ValueError("Invalid notification method")
+            raise ValueError(f"Unsupported notification type: {method}")
 
         return NotificationFactory._methods[method]()
 
 
 def main() -> None:
-    notification_process = NotificationFactory()
-    notification = notification_process.get_notification("push")
+    notification = NotificationFactory.create("push")
     notification.send("Hi")
 
 

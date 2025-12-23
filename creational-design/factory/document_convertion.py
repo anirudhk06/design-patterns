@@ -1,7 +1,9 @@
+from abc import ABC, abstractmethod
 from typing import Type
 
 
-class DocumentConverter:
+class DocumentConverter(ABC):
+    @abstractmethod
     def convert(self, *args, **kwargs) -> None:
         raise NotImplementedError("Subclasses must be implemented convert method.")
 
