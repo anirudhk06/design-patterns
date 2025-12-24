@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from datetime import datetime
 from typing import Dict, List, Type
-
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 class Event:
     pass
@@ -28,6 +30,7 @@ class Subscriber(ABC):
 
 class EmailSubscriber(Subscriber):
     def handle(self, event: Type[Event]):
+        time.sleep(3)
         if isinstance(event, OrderPlacedEvent):
             print(f"Email: Order {event.order_id} placed")
         elif isinstance(event, OrderCancelledEvent):
@@ -36,6 +39,7 @@ class EmailSubscriber(Subscriber):
 
 class SMSSubscriber(Subscriber):
     def handle(self, event: Type[Event]):
+        time.sleep(4)
         if isinstance(event, OrderPlacedEvent):
             print(f"SMS: Order {event.order_id} placed")
         elif isinstance(event, OrderCancelledEvent):
@@ -44,6 +48,7 @@ class SMSSubscriber(Subscriber):
 
 class RefundSubscriber(Subscriber):
     def handle(self, event: Event):
+        time.sleep(3)
         if isinstance(event, OrderCancelledEvent):
             print(f"Refund initiated for order {event.order_id}")
 
@@ -60,20 +65,31 @@ class EventBus:
             self._subscribers[event_type].append(subscriber)
 
     def publish(self, event: Event):
-        for subscriber in self._subscribers[type(event)]:
-            subscriber.handle(event)
 
+        with ThreadPoolExecutor() as executor:
+            for subscriber in self._subscribers[type(event)]:
+                executor.submit(self._safe_notify, subscriber, event)
+
+    def _safe_notify(self, subscriber: Subscriber, event:Event):
+        try:
+            subscriber.handle(event)
+        except Exception as e:
+            print(f"Observer failed: {e}")
 
 def main() -> None:
     bus = EventBus()
 
     order1 = OrderPlacedEvent(100)
-    order2 = OrderPlacedEvent(101)
-
     bus.subscribe(OrderPlacedEvent, EmailSubscriber())
     bus.subscribe(OrderPlacedEvent, SMSSubscriber())
+    bus.subscribe(OrderPlacedEvent, SMSSubscriber())
+    bus.subscribe(OrderPlacedEvent, SMSSubscriber())
+    bus.subscribe(OrderPlacedEvent, SMSSubscriber())
 
+    start = datetime.now()
     bus.publish(order1)
+    time_taken = (datetime.now() - start).total_seconds()
+    print(f"Time taken: {time_taken}")
 
 
 if __name__ == "__main__":
