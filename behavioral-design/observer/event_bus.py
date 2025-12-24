@@ -65,17 +65,15 @@ class EventBus:
 
 
 def main() -> None:
-    event_bus = EventBus()
+    bus = EventBus()
 
     order1 = OrderPlacedEvent(100)
     order2 = OrderPlacedEvent(101)
 
-    event_bus.subscribe(
-        order1, [EmailSubscriber(), SMSSubscriber(), RefundSubscriber()]
-    )
-    event_bus.subscribe(order2, SMSSubscriber())
+    bus.subscribe(OrderPlacedEvent, EmailSubscriber())
+    bus.subscribe(OrderPlacedEvent, SMSSubscriber())
 
-    event_bus.publish(order2)
+    bus.publish(order1)
 
 
 if __name__ == "__main__":
